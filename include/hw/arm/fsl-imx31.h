@@ -25,6 +25,8 @@
 #include "hw/i2c/imx_i2c.h"
 #include "hw/gpio/imx_gpio.h"
 #include "hw/watchdog/wdt_imx2.h"
+#include "hw/display/imx31_ipu.h"
+#include "hw/usb/chipidea.h"
 #include "system/memory.h"
 #include "target/arm/cpu.h"
 #include "qom/object.h"
@@ -32,7 +34,7 @@
 #define TYPE_FSL_IMX31 "fsl-imx31"
 OBJECT_DECLARE_SIMPLE_TYPE(FslIMX31State, FSL_IMX31)
 
-#define FSL_IMX31_NUM_UARTS 2
+#define FSL_IMX31_NUM_UARTS 3
 #define FSL_IMX31_NUM_EPITS 2
 #define FSL_IMX31_NUM_I2CS 3
 #define FSL_IMX31_NUM_GPIOS 3
@@ -51,6 +53,8 @@ struct FslIMX31State {
     IMXI2CState    i2c[FSL_IMX31_NUM_I2CS];
     IMXGPIOState   gpio[FSL_IMX31_NUM_GPIOS];
     IMX2WdtState   wdt;
+    IMX31IPUState  ipu;
+    ChipideaState  usb;
     MemoryRegion   secure_rom;
     MemoryRegion   rom;
     MemoryRegion   iram;
@@ -75,6 +79,8 @@ struct FslIMX31State {
 #define FSL_IMX31_UART2_SIZE            0x4000
 #define FSL_IMX31_I2C2_ADDR             0x43F98000
 #define FSL_IMX31_I2C2_SIZE             0x4000
+#define FSL_IMX31_UART3_ADDR            0x5000C000
+#define FSL_IMX31_UART3_IRQ             18
 #define FSL_IMX31_CCM_ADDR              0x53F80000
 #define FSL_IMX31_CCM_SIZE              0x4000
 #define FSL_IMX31_GPT_ADDR              0x53F90000
@@ -85,6 +91,10 @@ struct FslIMX31State {
 #define FSL_IMX31_EPIT2_SIZE            0x4000
 #define FSL_IMX31_GPIO3_ADDR            0x53FA4000
 #define FSL_IMX31_GPIO3_SIZE            0x4000
+#define FSL_IMX31_USB_ADDR              0x43F88000
+#define FSL_IMX31_USB_IRQ               37
+#define FSL_IMX31_IPU_ADDR              0x53FC0000
+#define FSL_IMX31_IPU_IRQ               42
 #define FSL_IMX31_GPIO1_ADDR            0x53FCC000
 #define FSL_IMX31_GPIO1_SIZE            0x4000
 #define FSL_IMX31_GPIO2_ADDR            0x53FD0000

@@ -502,6 +502,10 @@ config FSL_IMX25
     select SDHCI
 
 config FSL_IMX31
+    select IMX31_IPU
+    select USB_CHIPIDEA
+    select TSC2007
+    select TVP5150
     bool
     default y
     depends on TCG && ARM

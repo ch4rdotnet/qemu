@@ -13,6 +13,7 @@
 
 #include "qemu/osdep.h"
 #include "hw/misc/imx31_ccm.h"
+#include "hw/core/qdev-properties.h"
 #include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
@@ -106,7 +107,7 @@ static uint32_t imx31_ccm_get_pll_ref_clk(IMXCCMState *dev)
             }
         } 
     } else {
-        freq = CKIH_FREQ;
+        freq = s->ckih_freq;
     }
 
     trace_imx31_ccm_get_pll_ref_clk(freq);
@@ -170,6 +171,15 @@ static uint32_t imx31_ccm_get_ipg_clk(IMXCCMState *dev)
     return freq;
 }
 
+/* ipg_per, always taken from the mcu domain here (the usb pll option isn't modelled) */
+static uint32_t imx31_ccm_get_per_clk(IMXCCMState *dev)
+{
+    IMX31CCMState *s = IMX31_CCM(dev);
+
+    return imx31_ccm_get_mcu_main_clk(dev)
+           / (1 + EXTRACT(s->reg[IMX31_CCM_PDR0_REG], PER));
+}
+
 static uint32_t imx31_ccm_get_clock_frequency(IMXCCMState *dev, IMXClk clock)
 {
     uint32_t freq = 0;
@@ -178,8 +188,10 @@ static uint32_t imx31_ccm_get_clock_frequency(IMXCCMState *dev, IMXClk clock)
     case CLK_NONE:
         break;
     case CLK_IPG:
-    case CLK_IPG_HIGH:
         freq = imx31_ccm_get_ipg_clk(dev);
+        break;
+    case CLK_IPG_HIGH:
+        freq = imx31_ccm_get_per_clk(dev);
         break;
     case CLK_32k:
         freq = CKIL_FREQ;
@@ -304,6 +316,10 @@ static void imx31_ccm_init(Object *obj)
     sysbus_init_mmio(sd, &s->iomem);
 }
 
+static const Property imx31_ccm_props[] = {
+    DEFINE_PROP_UINT32("ckih-frequency", IMX31CCMState, ckih_freq, CKIH_FREQ),
+};
+
 static void imx31_ccm_class_init(ObjectClass *klass, const void *data)
 {
     DeviceClass *dc  = DEVICE_CLASS(klass);
@@ -311,6 +327,7 @@ static void imx31_ccm_class_init(ObjectClass *klass, const void *data)
 
     device_class_set_legacy_reset(dc, imx31_ccm_reset);
     dc->vmsd  = &vmstate_imx31_ccm;
+    device_class_set_props(dc, imx31_ccm_props);
     dc->desc  = "i.MX31 Clock Control Module";
 
     ccm->get_clock_frequency = imx31_ccm_get_clock_frequency;

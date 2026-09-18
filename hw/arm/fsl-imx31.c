@@ -58,6 +58,8 @@ static void fsl_imx31_init(Object *obj)
     }
 
     object_initialize_child(obj, "wdt", &s->wdt, TYPE_IMX2_WDT);
+    object_initialize_child(obj, "ipu", &s->ipu, TYPE_IMX31_IPU);
+    object_initialize_child(obj, "usb", &s->usb, TYPE_CHIPIDEA);
 }
 
 static void fsl_imx31_realize(DeviceState *dev, Error **errp)
@@ -91,6 +93,7 @@ static void fsl_imx31_realize(DeviceState *dev, Error **errp)
         } serial_table[FSL_IMX31_NUM_UARTS] = {
             { FSL_IMX31_UART1_ADDR, FSL_IMX31_UART1_IRQ },
             { FSL_IMX31_UART2_ADDR, FSL_IMX31_UART2_IRQ },
+            { FSL_IMX31_UART3_ADDR, FSL_IMX31_UART3_IRQ },
         };
 
         qdev_prop_set_chr(DEVICE(&s->uart[i]), "chardev", serial_hd(i));
@@ -186,6 +189,22 @@ static void fsl_imx31_realize(DeviceState *dev, Error **errp)
     /* Watchdog */
     sysbus_realize(SYS_BUS_DEVICE(&s->wdt), &error_abort);
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->wdt), 0, FSL_IMX31_WDT_ADDR);
+
+    if (!sysbus_realize(SYS_BUS_DEVICE(&s->ipu), errp)) {
+        return;
+    }
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->ipu), 0, FSL_IMX31_IPU_ADDR);
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->ipu), 0,
+                       qdev_get_gpio_in(DEVICE(&s->avic),
+                                        FSL_IMX31_IPU_IRQ));
+
+    /* usb otg core, a freescale chipidea, enough for a mass storage disk */
+    if (!sysbus_realize(SYS_BUS_DEVICE(&s->usb), errp)) {
+        return;
+    }
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->usb), 0, FSL_IMX31_USB_ADDR);
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->usb), 0,
+                       qdev_get_gpio_in(DEVICE(&s->avic), FSL_IMX31_USB_IRQ));
 
     /* On a real system, the first 16k is a `secure boot rom' */
     if (!memory_region_init_rom(&s->secure_rom, OBJECT(dev), "imx31.secure_rom",

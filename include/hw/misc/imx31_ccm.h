@@ -83,6 +83,7 @@ struct IMX31CCMState {
     MemoryRegion iomem;
 
     uint32_t reg[IMX31_CCM_MAX_REG];
+    uint32_t ckih_freq;
 
 };
 
