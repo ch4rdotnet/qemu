@@ -26,7 +26,9 @@
 #define TYPE_IMX_SERIAL "imx.serial"
 OBJECT_DECLARE_SIMPLE_TYPE(IMXSerialState, IMX_SERIAL)
 
-#define FIFO_SIZE       32
+/* the real uart has a 32 entry rx fifo; we keep a much deeper one so a fast chardev can be
+ * drained without overruns, the way the wire's baud rate protects the real fifo */
+#define FIFO_SIZE       65536
 
 #define URXD_CHARRDY    (1<<15)   /* character read is valid */
 #define URXD_ERR        (1<<14)   /* Character has error */

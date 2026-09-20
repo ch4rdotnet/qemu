@@ -2,7 +2,8 @@
  * swsa fdm, the i.MX31 board inside the ford icc head unit
  *
  * 512mb over both sdram chip selects, serial 0 is the debug console on
- * uart1, serial 2 is uart3 which goes to the can companion micro.
+ * uart1, serial 2 is uart3 which goes to the can companion micro. uart4 and
+ * uart5 are modelled too, serial 4 is uart5, the spare gps port (/dev/ser5).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */

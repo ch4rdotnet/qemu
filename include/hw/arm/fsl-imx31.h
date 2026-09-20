@@ -34,7 +34,7 @@
 #define TYPE_FSL_IMX31 "fsl-imx31"
 OBJECT_DECLARE_SIMPLE_TYPE(FslIMX31State, FSL_IMX31)
 
-#define FSL_IMX31_NUM_UARTS 3
+#define FSL_IMX31_NUM_UARTS 5
 #define FSL_IMX31_NUM_EPITS 2
 #define FSL_IMX31_NUM_I2CS 3
 #define FSL_IMX31_NUM_GPIOS 3
@@ -81,6 +81,10 @@ struct FslIMX31State {
 #define FSL_IMX31_I2C2_SIZE             0x4000
 #define FSL_IMX31_UART3_ADDR            0x5000C000
 #define FSL_IMX31_UART3_IRQ             18
+#define FSL_IMX31_UART4_ADDR            0x43FB0000
+#define FSL_IMX31_UART4_SIZE            0x4000
+#define FSL_IMX31_UART5_ADDR            0x43FB4000
+#define FSL_IMX31_UART5_SIZE            0x4000
 #define FSL_IMX31_CCM_ADDR              0x53F80000
 #define FSL_IMX31_CCM_SIZE              0x4000
 #define FSL_IMX31_GPT_ADDR              0x53F90000
@@ -127,6 +131,8 @@ struct FslIMX31State {
 #define FSL_IMX31_GPT_IRQ               29
 #define FSL_IMX31_UART2_IRQ             32
 #define FSL_IMX31_UART1_IRQ             45
+#define FSL_IMX31_UART4_IRQ             46
+#define FSL_IMX31_UART5_IRQ             47
 #define FSL_IMX31_I2C1_IRQ              10
 #define FSL_IMX31_I2C2_IRQ              4
 #define FSL_IMX31_I2C3_IRQ              3

@@ -94,6 +94,8 @@ static void fsl_imx31_realize(DeviceState *dev, Error **errp)
             { FSL_IMX31_UART1_ADDR, FSL_IMX31_UART1_IRQ },
             { FSL_IMX31_UART2_ADDR, FSL_IMX31_UART2_IRQ },
             { FSL_IMX31_UART3_ADDR, FSL_IMX31_UART3_IRQ },
+            { FSL_IMX31_UART4_ADDR, FSL_IMX31_UART4_IRQ },
+            { FSL_IMX31_UART5_ADDR, FSL_IMX31_UART5_IRQ },
         };
 
         qdev_prop_set_chr(DEVICE(&s->uart[i]), "chardev", serial_hd(i));

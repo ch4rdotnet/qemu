@@ -199,8 +199,10 @@ static uint64_t imx_serial_read(void *opaque, hwaddr offset,
             /* Character is valid */
             c |= URXD_CHARRDY;
             rx_used = fifo32_num_used(&s->rx_fifo);
-            /* Clear RRDY if below threshold */
-            if (rx_used < rxtl) {
+            /* Clear RRDY if below threshold. rxtl can be 0 (hardware means one character), so
+             * an empty FIFO always counts as below threshold, otherwise RRDY would stay set on
+             * an empty FIFO and the driver would read spurious zeros. */
+            if (rx_used == 0 || rx_used < rxtl) {
                 s->usr1 &= ~USR1_RRDY;
             }
             if (rx_used == 0) {
