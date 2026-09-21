@@ -26,6 +26,9 @@ else
       'char-pty.c',
     ), util)
 endif
+if host_os == 'emscripten'
+  chardev_ss.add(files('char-wasm.c'))
+endif
 
 chardev_ss = chardev_ss.apply({})
 

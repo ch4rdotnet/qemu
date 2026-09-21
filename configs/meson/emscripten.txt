@@ -1,11 +1,15 @@
 [built-in options]
-c_args = ['-pthread']
-cpp_args = ['-pthread']
-objc_args = ['-pthread']
+# setjmp and longjmp as wasm exceptions, the javascript ones cost a thrown js
+# exception per cpu_loop_exit. asyncify can't instrument functions that hold
+# them, so the setjmp users are kept out of it (none sit on a coroutine switch)
+# and ffi_call_js is no asyncify import (tcg helpers never yield)
+c_args = ['-pthread','-sSUPPORT_LONGJMP=wasm']
+cpp_args = ['-pthread','-sSUPPORT_LONGJMP=wasm']
+objc_args = ['-pthread','-sSUPPORT_LONGJMP=wasm']
 # -sPROXY_TO_PTHREAD link time flag always requires -pthread even during
 # configuration so explicitly add the flag here.
-c_link_args = ['-pthread','-sASYNCIFY=1','-sPROXY_TO_PTHREAD=1','-sFORCE_FILESYSTEM','-sALLOW_TABLE_GROWTH','-sTOTAL_MEMORY=2GB','-sWASM_BIGINT','-sEXPORT_ES6=1','-sASYNCIFY_IMPORTS=ffi_call_js','-sEXPORTED_RUNTIME_METHODS=addFunction,removeFunction,TTY,FS']
-cpp_link_args = ['-pthread','-sASYNCIFY=1','-sPROXY_TO_PTHREAD=1','-sFORCE_FILESYSTEM','-sALLOW_TABLE_GROWTH','-sTOTAL_MEMORY=2GB','-sWASM_BIGINT','-sEXPORT_ES6=1','-sASYNCIFY_IMPORTS=ffi_call_js','-sEXPORTED_RUNTIME_METHODS=addFunction,removeFunction,TTY,FS']
+c_link_args = ['-pthread','-sSUPPORT_LONGJMP=wasm','-sASYNCIFY=1','-sASYNCIFY_REMOVE=cpu_exec*,setjmp_gen_code,tb_gen_code,get_expr,expr_*,monitor_parse_arguments,do_touch_pages,touch_all_pages','-sPROXY_TO_PTHREAD=1','-sFORCE_FILESYSTEM','-sALLOW_TABLE_GROWTH','-sTOTAL_MEMORY=2GB','-sWASM_BIGINT','-sEXPORT_ES6=1','-sEXPORTED_RUNTIME_METHODS=addFunction,removeFunction,TTY,FS,HEAPU8,HEAPU32']
+cpp_link_args = ['-pthread','-sSUPPORT_LONGJMP=wasm','-sASYNCIFY=1','-sASYNCIFY_REMOVE=cpu_exec*,setjmp_gen_code,tb_gen_code,get_expr,expr_*,monitor_parse_arguments,do_touch_pages,touch_all_pages','-sPROXY_TO_PTHREAD=1','-sFORCE_FILESYSTEM','-sALLOW_TABLE_GROWTH','-sTOTAL_MEMORY=2GB','-sWASM_BIGINT','-sEXPORT_ES6=1','-sEXPORTED_RUNTIME_METHODS=addFunction,removeFunction,TTY,FS,HEAPU8,HEAPU32']
 
 [project options]
 # Workaround for failure to find glib-2.0 when building idef parser,
