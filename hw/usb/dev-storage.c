@@ -341,7 +341,7 @@ void usb_msd_handle_reset(USBDevice *dev)
     s->needs_reset = false;
 }
 
-static void usb_msd_handle_control(USBDevice *dev, USBPacket *p,
+void usb_msd_handle_control(USBDevice *dev, USBPacket *p,
                int request, int value, int index, int length, uint8_t *data)
 {
     MSDState *s = (MSDState *)dev;
@@ -395,7 +395,7 @@ static void usb_msd_cancel_io(USBDevice *dev, USBPacket *p)
     }
 }
 
-static void usb_msd_handle_data(USBDevice *dev, USBPacket *p)
+void usb_msd_handle_data(USBDevice *dev, USBPacket *p)
 {
     MSDState *s = (MSDState *)dev;
     uint32_t tag;

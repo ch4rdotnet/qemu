@@ -53,3 +53,8 @@ void usb_msd_command_complete(SCSIRequest *req, size_t resid);
 void usb_msd_request_cancelled(SCSIRequest *req);
 void *usb_msd_load_request(QEMUFile *f, SCSIRequest *req);
 void usb_msd_handle_reset(USBDevice *dev);
+/* for composite devices that carry a mass storage interface alongside another function */
+void usb_msd_handle_control(USBDevice *dev, USBPacket *p,
+                            int request, int value, int index, int length,
+                            uint8_t *data);
+void usb_msd_handle_data(USBDevice *dev, USBPacket *p);
