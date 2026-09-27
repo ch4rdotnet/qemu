@@ -34,7 +34,10 @@ typedef enum {
                       */
 } QEMUChrEvent;
 
-#define CHR_READ_BUF_LEN 4096
+/* one main loop event used to carry only 4k, and a 768000 byte raw frame then costs
+ * about two hundred trips through the main loop. 64k keeps the usb-livi vendor ring
+ * fed at memory speed. */
+#define CHR_READ_BUF_LEN 65536
 
 typedef enum {
     /* Whether the chardev peer is able to close and

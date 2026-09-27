@@ -25,8 +25,12 @@
 #include "chardev/char-fe.h"
 #include "qom/object.h"
 
-/* host to guest buffering: the qnx hcd retries naks, so this only has to cover a burst */
-#define LIVI_BUF 65536
+/* host to guest buffering. the qnx hcd retries naks, so this only has to cover a burst;
+ * raw video streams a whole 768000 byte frame, and a ring smaller than a frame makes the
+ * guest's request-sized dma chunks nak until the ring refills one main loop pass at a
+ * time (about a millisecond a chunk). a megabyte lets a whole frame sit buffered and the
+ * raw path drain it at memory speed. */
+#define LIVI_BUF (1 << 20)
 
 #define TYPE_USB_LIVI "usb-livi"
 OBJECT_DECLARE_SIMPLE_TYPE(USBLiviState, USB_LIVI)
@@ -41,6 +45,12 @@ struct USBLiviState {
     uint8_t buf[LIVI_BUF];
     /* 32 bit: a full buffer is exactly LIVI_BUF, and a 16 bit used would wrap to 0 there */
     uint32_t ptr, used;
+    /* raw video reads chunks straight into the display buffer, so it needs the bulk-in
+     * request to complete at exactly its own size the way functionfs does on a real
+     * gadget: when chunked is set the endpoint naks until a whole request fits in the
+     * ring instead of returning a short packet. off by default, liviplay needs the short
+     * packets to resync on the mpeg frame headers. */
+    bool chunked;
 };
 
 enum {
@@ -93,6 +103,11 @@ static const USBDescIface desc_iface_mass_full = {
     }
 };
 
+static const USBDescIface desc_ifs_full[] = {
+    desc_iface_vendor_full,
+    desc_iface_mass_full,
+};
+
 static const USBDescDevice desc_device_full = {
     .bcdUSB                        = 0x0200,
     .bDeviceClass                  = 0x00, /* per interface */
@@ -105,10 +120,7 @@ static const USBDescDevice desc_device_full = {
             .bmAttributes          = USB_CFG_ATT_ONE | USB_CFG_ATT_SELFPOWER,
             .bMaxPower             = 250,
             .nif = 2,
-            .ifs = (USBDescIface[]) {
-                desc_iface_vendor_full,
-                desc_iface_mass_full,
-            },
+            .ifs = desc_ifs_full,
         },
     },
 };
@@ -151,6 +163,11 @@ static const USBDescIface desc_iface_mass_high = {
     }
 };
 
+static const USBDescIface desc_ifs_high[] = {
+    desc_iface_vendor_high,
+    desc_iface_mass_high,
+};
+
 static const USBDescDevice desc_device_high = {
     .bcdUSB                        = 0x0200,
     .bDeviceClass                  = 0x00, /* per interface */
@@ -163,10 +180,7 @@ static const USBDescDevice desc_device_high = {
             .bmAttributes          = USB_CFG_ATT_ONE | USB_CFG_ATT_SELFPOWER,
             .bMaxPower             = 250,
             .nif = 2,
-            .ifs = (USBDescIface[]) {
-                desc_iface_vendor_high,
-                desc_iface_mass_high,
-            },
+            .ifs = desc_ifs_high,
         },
     },
 };
@@ -249,7 +263,7 @@ static void usb_livi_token_in(USBLiviState *s, USBPacket *p)
 {
     int len, first;
 
-    if (!s->used) {
+    if (!s->used || (s->chunked && p->iov.size <= LIVI_BUF && s->used < p->iov.size)) {
         p->status = USB_RET_NAK;
         return;
     }
@@ -364,11 +378,38 @@ static void usb_livi_realize(USBDevice *dev, Error **errp)
     s->in_ep = usb_ep_get(dev, USB_TOKEN_IN, 3);
 }
 
+/* chunked is toggled at runtime: the benchmark runs the mpeg player (which wants short
+ * packets) and the raw player (which wants request-sized ones) against the same gadget,
+ * so the property has to be settable after realize. */
+static void prop_chunked_get(Object *obj, Visitor *v, const char *name, void *opaque,
+                             Error **errp)
+{
+    bool *ptr = object_field_prop_ptr(obj, opaque);
+
+    visit_type_bool(v, name, ptr, errp);
+}
+
+static void prop_chunked_set(Object *obj, Visitor *v, const char *name, void *opaque,
+                             Error **errp)
+{
+    bool *ptr = object_field_prop_ptr(obj, opaque);
+
+    visit_type_bool(v, name, ptr, errp);
+}
+
+static const PropertyInfo prop_chunked = {
+    .type = "bool",
+    .get = prop_chunked_get,
+    .set = prop_chunked_set,
+    .realized_set_allowed = true,
+};
+
 static const Property usb_livi_properties[] = {
     DEFINE_BLOCK_PROPERTIES(MSDState, conf),
     DEFINE_BLOCK_ERROR_PROPERTIES(MSDState, conf),
     DEFINE_PROP_BOOL("removable", MSDState, removable, false),
     DEFINE_PROP_CHR("chardev", USBLiviState, cs),
+    DEFINE_PROP("chunked", USBLiviState, chunked, prop_chunked, bool),
 };
 
 static void usb_livi_class_init(ObjectClass *klass, const void *data)
