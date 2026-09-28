@@ -1,10 +1,10 @@
 /*
  * Composite USB device: a mass storage function (the homebrew stick, mounted by devb-umass
- * as /fs/usb0) and a vendor specific bulk interface that carries the livi mpeg-2 stream and
- * touch events. The unit side is sdk/out/liviplay --usb; the host side is livi/stream.py
- * talking to the chardev socket. See docs/livi-usb.md.
+ * as /fs/usb0) and a vendor specific bulk interface that carries the livi byte streams
+ * (rawplay + livi/out/rawlink, vnccl + vnc/host.py) over the chardev socket. See
+ * docs/rawplay.md and docs/vnc-usb.md.
  *
- * This is the emulator's stand-in for the real car's USB gadget (livi/usbgadget.py): one
+ * This is the emulator's stand-in for the real car's USB gadget (livi/out/rawlink gadget): one
  * device, device class 0x00 so the qnx stack reports each interface separately, mass storage
  * on interface 1 (bulk endpoints 1/2, which the qemu msd core expects) and the vendor
  * interface on interface 0 (bulk endpoints 3/4).
@@ -14,6 +14,7 @@
 
 #include "qemu/osdep.h"
 #include "qapi/error.h"
+#include "qapi/visitor.h"
 #include "qemu/module.h"
 #include "hw/core/qdev-properties.h"
 #include "hw/core/qdev-properties-system.h"
@@ -187,7 +188,7 @@ static const USBDescDevice desc_device_high = {
 
 static const USBDesc desc_livi = {
     .id = {
-        /* the same ids livi/usbgadget.py gives the real gadget */
+        /* the same ids livi/out/rawlink gadget gives the real gadget */
         .idVendor          = 0x1209,
         .idProduct         = 0x1cc2,
         .bcdDevice         = 0x0100,
