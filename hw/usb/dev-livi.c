@@ -14,6 +14,7 @@
 
 #include "qemu/osdep.h"
 #include "qapi/error.h"
+#include "qapi/visitor.h"
 #include "qemu/module.h"
 #include "hw/core/qdev-properties.h"
 #include "hw/core/qdev-properties-system.h"
